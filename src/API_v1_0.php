@@ -10,39 +10,25 @@ class API_v1_0 extends BaseApi {
         parent::__construct($version, $verbose, $storeType, $storeLocation);
 
         $this->validFeeds = [
-	  		'seasonal_games',
-		    'daily_games',
-		    'weekly_games',
-		    'seasonal_dfs',
-		    'daily_dfs',
-		    'weekly_dfs',
-		    'seasonal_player_gamelogs',
-		    'daily_player_gamelogs',
-		    'weekly_player_gamelogs',
-		    'seasonal_team_gamelogs',
-		    'daily_team_gamelogs',
-		    'weekly_team_gamelogs',
-		    'game_boxscore',
-		    'game_playbyplay',
-		    'game_lineup',
-		    'current_season',
-		    'player_injuries',
-		    'latest_updates',
-		    'seasonal_team_stats',
-		    'seasonal_player_stats',
-		    'seasonal_venues',
-		    'players',
-		    'seasonal_standings'
+            'cumulative_player_stats'  => ['season' => true,  'pathparms' => [], 'endpoint' => 'cumulative_player_stats'],
+            'full_game_schedule'       => ['season' => true,  'pathparms' => [], 'endpoint' => 'full_game_schedule'],
+            'daily_game_schedule'      => ['season' => true,  'pathparms' => [], 'endpoint' => 'daily_game_schedule'],
+            'daily_player_stats'       => ['season' => true,  'pathparms' => [], 'endpoint' => 'daily_player_stats'],
+            'game_boxscore'            => ['season' => true,  'pathparms' => [], 'endpoint' => 'game_boxscore'],
+            'game_playbyplay'          => ['season' => true,  'pathparms' => [], 'endpoint' => 'game_playbyplay'],
+            'scoreboard'               => ['season' => true,  'pathparms' => [], 'endpoint' => 'scoreboard'],
+            'game_startinglineup'      => ['season' => true,  'pathparms' => [], 'endpoint' => 'game_startinglineup'],
+            'player_gamelogs'          => ['season' => true,  'pathparms' => [], 'endpoint' => 'player_gamelogs'],
+            'team_gamelogs'            => ['season' => true,  'pathparms' => [], 'endpoint' => 'team_gamelogs'],
+            'active_players'           => ['season' => true,  'pathparms' => [], 'endpoint' => 'active_players'],
+            'overall_team_standings'   => ['season' => true,  'pathparms' => [], 'endpoint' => 'overall_team_standings'],
+            'conference_team_standings'=> ['season' => true,  'pathparms' => [], 'endpoint' => 'conference_team_standings'],
+            'division_team_standings'  => ['season' => true,  'pathparms' => [], 'endpoint' => 'division_team_standings'],
+            'playoff_team_standings'   => ['season' => true,  'pathparms' => [], 'endpoint' => 'playoff_team_standings'],
+            'player_injuries'          => ['season' => true,  'pathparms' => [], 'endpoint' => 'player_injuries'],
+            'latest_updates'           => ['season' => true,  'pathparms' => [], 'endpoint' => 'latest_updates'],
+            'daily_dfs'                => ['season' => true,  'pathparms' => [], 'endpoint' => 'daily_dfs'],
+            'current_season'           => ['season' => false, 'pathparms' => [], 'endpoint' => 'current_season'],
         ];
     }
-
-    protected function __determineUrl($league, $season, $feed, $outputFormat, ...$kvParams)
-    {
-        if ( $feed == 'current_season' ) {
-            return $this->baseUrl . "/" . $league . "/" . $feed . "." . $outputFormat;
-        } else {
-            return $this->baseUrl . "/" . $league . "/" . $season . "/" . $feed . "." . $outputFormat;
-        }
-    }
-
 }

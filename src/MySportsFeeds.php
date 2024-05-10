@@ -43,6 +43,11 @@ class MySportsFeeds {
     }
   }
 
+  # Return an array of feed settings in this API version, indexed by feed name.
+  public function getFeedsList() {
+      return $this->apiInstance->getFeedsList();
+  }
+
   # Authenticate against the API (for v1.x, v2.x)
   public function authenticate($apikey, $password) {
     if ( !$this->apiInstance->supportsBasicAuth() ) {
@@ -54,10 +59,6 @@ class MySportsFeeds {
 
   # Request data (and store it if applicable)
   public function getData($league, $season, $feed, $format, ...$kvParams) {
-
-    if ($this->verbose) {
-      echo "<br>" . __CLASS__ . "::" . __METHOD__ . "<pre>" . print_r($kvParams, true) . "</pre><br>";
-    }
 
     return $this->apiInstance->getData($league, $season, $feed, $format, ...$kvParams);
   }
