@@ -20,6 +20,9 @@ class ApiFactory
             case '2.0':
                 $apiVersion = new API_v2_0($version, $verbose, $storeType, $storeLocation);
                 break;
+            case '2.1':
+                $apiVersion = new API_v2_1($version, $verbose, $storeType, $storeLocation);
+                break;
             default:
                 $apiVersion = new BaseApi($version, $verbose, $storeType, $storeLocation);
                 break;
