@@ -32,12 +32,12 @@ class MySportsFeeds {
 
   # Verify the type and location of the stored data
   private function __verifyStore($storeType, $storeLocation) {
-    if ( $storeType != null and $storeType != "file" ) {
+    if ($storeType !== null && $storeType != "file") {
       throw new \ErrorException("Unrecognized storage type specified.  Supported values are: {null,'file'}");
     }
 
-    if ( $storeType == "file" ) {
-      if ( $storeLocation == null ) {
+    if ($storeType == "file") {
+      if ($storeLocation === null) {
         throw new \ErrorException("Must specify a location for stored data.");
       }
     }
@@ -48,9 +48,19 @@ class MySportsFeeds {
       return $this->apiInstance->getFeedsList();
   }
 
+  # Get the HTTP response code from the most recent call to getData()
+  public function getHTTPCode() {
+      return $this->apiInstance->getHTTPCode();
+  }
+
+  # Get the URL used for the most recent call to getData()
+  public function getURL() {
+      return $this->apiInstance->getURL();
+  }
+
   # Authenticate against the API (for v1.x, v2.x)
   public function authenticate($apikey, $password) {
-    if ( !$this->apiInstance->supportsBasicAuth() ) {
+    if (!$this->apiInstance->supportsBasicAuth()) {
       throw new \ErrorException("BASIC authentication not supported for API version " + $this->api_version);
     }
 

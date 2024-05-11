@@ -12,6 +12,8 @@ class BaseApi
     protected $storeLocation;
     protected $storeOutput;
     protected $version;
+    protected $httpCode;  // getData() sets this to HTTP status code from server
+    protected $url;       // getData() sets this full URL used for the request
     
     /**
      * Valid feeds is an array of feed names and the options needed to create 
@@ -51,6 +53,8 @@ class BaseApi
         $this->storeType = $storeType;
         $this->storeLocation = $storeLocation;
         $this->version = $version;
+        $this->httpCode = 0;   // set by getData()
+        $this->url      =  ''; // set by getData()
         $this->baseUrl = $this->getBaseUrlForVersion($version);
 
         $this->validFeeds = [];  // API subclasses define the feeds for each API version
@@ -186,6 +190,18 @@ class BaseApi
             $filename .= "-" . $params["fordate"];
         }
 
+        if (array_key_exists("game", $params)) {
+            $filename .= "-" . $params["game"];
+        }
+
+        if (array_key_exists("date", $params)) {
+            $filename .= "-" . $params["date"];
+        }
+
+        if (array_key_exists("week", $params)) {
+            $filename .= "-" . $params["week"];
+        }
+
         $filename .= "." . $outputFormat;
 
         if ($this->verbose) {
@@ -241,6 +257,16 @@ class BaseApi
         return $this->validFeeds;
     }
 
+    # Get the HTTP status code from the most recent call to getData()
+    public function getHTTPCode() {
+        return $this->httpCode;
+    }
+
+    # Get the full URL used by the most recent call to getData()
+    public function getURL() {
+        return $this->url;
+    }
+
     # Request data (and store it if applicable)
     public function getData($league, $season, $feed, $format, ...$kvParams) {
 
@@ -278,15 +304,15 @@ class BaseApi
 	        }
         }
 
-        $url = $this->__determineUrl($league, $season, $feed, $format, ...$kvParams);
+        $this->url = $this->__determineUrl($league, $season, $feed, $format, ...$kvParams);
 
-        if ( $this->verbose ) {
-            print("Making API request to '" . $url . "' ... \n");
+        if ($this->verbose) {
+            print("Making API request to '{$this->url}' ... \n");
         }
 
         // Establish a curl handle for the request
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_URL, $this->url);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_ENCODING, "gzip"); // Enable compression
@@ -301,20 +327,20 @@ class BaseApi
         // Uncomment the following if you're having trouble:
         // print(curl_error($ch));
 
-        // Get the response code and then close the curl handle
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        // Get the HTTP response status code then close the curl handle
+        $this->httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
         $data = "";
 
-        if ( $httpCode == 200 ) {
+        if ($this->httpCode == 200) {
 	        // Fixes MySportsFeeds/mysportsfeeds-php#1
 	        // Remove if storeType == null so data gets stored in memory regardless.
 	        $this->__saveFeed($resp, $league, $season, $feed, $format, ...$kvParams);
 
             $data = $this->storeOutput;
-        } elseif ( $httpCode == 304 ) {
-            if ( $this->verbose ) {
+        } elseif ($this->httpCode == 304) {
+            if ($this->verbose) {
                 print("Data hasn't changed since last call.\n");
             }
 
@@ -332,7 +358,7 @@ class BaseApi
 
             $data = $this->storeOutput;
         } else {
-            throw new \ErrorException("API call failed with response code: " . $httpCode);
+            throw new \ErrorException("API call failed with HTTP status code: {$this->httpCode}");
         }
 
         return $data;
