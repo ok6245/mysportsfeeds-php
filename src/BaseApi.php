@@ -8,6 +8,7 @@ class BaseApi
 
     protected $baseUrl;
     protected $verbose;
+    protected $verboseEOL;   // EOL char(s) depending on running env: cli or webserver
     protected $storeType;
     protected $storeLocation;
     protected $storeOutput;
@@ -50,6 +51,7 @@ class BaseApi
 
         $this->auth = null;
         $this->verbose = $verbose;
+        $this->verboseEOL = (php_sapi_name() == 'cli') ?  "\n" : "<br>";  // not perfect but helps
         $this->storeType = $storeType;
         $this->storeLocation = $storeLocation;
         $this->version = $version;
@@ -118,25 +120,29 @@ class BaseApi
         # Concatenate all the pieces to create one string for the URL
         # Examples:  "" or "date/20200410/" or "date/20200410/team/NYY/"
         $pieces = array();
-        foreach ($feed_settings['pathparms'] as $name_slash_parm) {
-            $rc = preg_match('/([a-z_]+)\/([a-z_]+)$/', $name_slash_parm, $matches);
+        foreach ($feed_settings['pathparms'] as $pathparm) {
+            $rc = preg_match('/([a-z_]+)\/([a-z_]+)$/', $pathparm, $matches);
             if ($rc === false || $rc == 0) {
-                throw new \ErrorException("Path parm '$name_slash_parm' is not of form 'name/parm'.");
+                throw new \ErrorException("Path parm '$pathparm' is not of form 'name/parm'.");
             }
             $name = $matches[1];
             $parm = $matches[2];
-            if (! array_key_exists($parm, $params)) {
-                throw new \ErrorException("You must specify a '{$parm}' value for this feed.");
+            if (! array_key_exists($parm, $params)  ||  ($params[$parm] == '')) {
+                throw new \ErrorException("The required '{$parm}' parameter is either missing or has an empty value.");
             }
-            $pieces[] = "{$name}/{$params[$parm]}/";
+            $piece = "{$name}/{$params[$parm]}/";
+            if ($this->verbose) {
+                print("Required pathparm '$pathparm', path piece '$piece'{$this->verboseEOL}");
+            }
+            $pieces[] = $piece;
 
-            # Remove this pathparm from PARAMS array, leaving only optional parms in PARAMS array
+            # Remove each required pathparm from PARAMS array, will leave only optional parms in PARAMS array
             unset($params[$parm]);
         }
         $pathparms = (count($pieces) > 0) ? implode('', $pieces) : '';
             
         # ENDPOINT 
-        #    like "daily_games.json"
+        #    like "daily_games"
         $endpoint = $feed_settings['endpoint'];
 
         # OPTIONS
@@ -144,7 +150,11 @@ class BaseApi
         # What's left in PARAMS array now are optional parameters
         $opts = array();
         foreach ($params as $parm => $value) {
-            $opts[] = "{$parm}={$value}";
+            $opt = "{$parm}={$value}";
+            $opts[] = $opt;
+            if ($this->verbose) {
+                print("Using optional parameter '$opt'{$this->verboseEOL}");
+            }
         }
         $options = (count($opts) > 0) ?  '?' . implode('&', $opts)  :  '';
 
@@ -181,7 +191,7 @@ class BaseApi
         $filename .= "." . $outputFormat;
 
         if ($this->verbose) {
-            echo "<br>" . __CLASS__ . "::" . __METHOD__ . " filename created: $filename<br>";
+            print("Filename will be '$filename'{$this->verboseEOL}");
         }
 
         return $filename;
@@ -209,10 +219,10 @@ class BaseApi
 
             if ($this->verbose) {
                 if ($nbytes === false) {
-                    echo "<br>" . __CLASS__ . "::" . __METHOD__ . " failed to write output file {$filename}";
+                    print("Failed to write output file {$filename}{$this->verboseEOL}");
                 }
                 else {
-                    echo "<br>" . __CLASS__ . "::" . __METHOD__ . " output file written: $filename ($nbytes bytes)";
+                    print("Output file written: $filename ($nbytes bytes){$this->verboseEOL}");
                 }
             }
         }
@@ -284,7 +294,7 @@ class BaseApi
         $this->url = $this->__determineUrl($league, $season, $feed, $format, $params);
 
         if ($this->verbose) {
-            print("Making API request to '{$this->url}' ... \n");
+            print("Making API request to '{$this->url}'{$this->verboseEOL}");
         }
 
         // Establish a curl handle for the request
@@ -318,7 +328,7 @@ class BaseApi
             $data = $this->storeOutput;
         } elseif ($this->httpCode == 304) {
             if ($this->verbose) {
-                print("Data hasn't changed since last call.\n");
+                print("Data hasn't changed since last call.{$this->verboseEOL}");
             }
 
             $filename = $this->__makeOutputFilename($league, $season, $feed, $format, $params);
